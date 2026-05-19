@@ -5,9 +5,10 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
+    "android": "expo run:android",
     "android:release": "expo run:android --variant release",
-    "ios": "expo start --ios",
+    "android:production": "expo prebuild --platform android --no-install",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "ios:release": "expo run:ios --configuration Release",
@@ -15,7 +16,8 @@
     "storybook": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED='true' expo start",
     "storybook:ios": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED='true' expo start --ios",
     "storybook:android": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED='true' expo start --android",
-    "expo:check": "expo install --check"
+    "expo:check": "expo install --check",
+    "chromatic:generate-manifest": "chromatic generate-manifest -o custom-build-dir"
   },
   "dependencies": {
     "@babel/core": "^7.29.0",
@@ -57,6 +59,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "chromatic": "^16.10.1",
     "cross-env": "^10.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",

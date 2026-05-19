@@ -16,7 +16,8 @@ const {
 } = require("@storybook/react-native/metro/withStorybook");
 
 const config = withStorybook(defaultConfig, {
-  enabled: process.env.EXPO_PUBLIC_STORYBOOK_ENABLED === "true",
+  //enabled: process.env.EXPO_PUBLIC_STORYBOOK_ENABLED === "true",
+  enabled: true,
 });
 
 module.exports = config;
