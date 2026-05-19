@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react-native';
-
+import { View } from 'react-native';
 const preview: Preview = {
   parameters: {
     controls: {
@@ -9,6 +9,13 @@ const preview: Preview = {
       },
     },
   },
+  decorators: [
+    (Story) => (
+      <View style={{ padding: 44, flex: 1 }}>
+        <Story />
+      </View>
+    ),
+  ],
 };
 
 export default preview;
