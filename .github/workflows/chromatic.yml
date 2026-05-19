@@ -1,0 +1,94 @@
+name: "Chromatic"
+
+on: # rebuild any PRs and main branch changes
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - master
+      - "releases/*"
+
+jobs:
+  chromatic:
+    name: Run Chromatic
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # Set a timeout to prevent hanging builds (might be removed if build times are consistently under 10 minutes)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.13.0
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v5
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Setup Java (required by Gradle)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Install dependencies
+        run: pnpm install
+      - name: Expo prebuild (Android)
+        env:
+          EXPO_PUBLIC_STORYBOOK_ENABLED: "true"
+        run: pnpm android:production
+      - name: Make Gradle wrapper executable
+        run: chmod +x android/gradlew
+      - name: Build unsigned release APK
+        working-directory: android
+        env:
+          EXPO_PUBLIC_STORYBOOK_ENABLED: "true"
+        run: ./gradlew assembleRelease -x lint --no-daemon
+      - name: Copy APK to custom-build-dir
+        run: |
+          mkdir -p custom-build-dir
+          APK_PATH=$(find android/app/build/outputs/apk/release \
+                          -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Error: No APK file found in android/app/build/outputs/apk/release"
+            exit 1
+          fi
+          if [ ! -f "$APK_PATH" ]; then
+            echo "❌ Error: APK path exists but file not found: $APK_PATH"
+            exit 1
+          fi
+          cp "$APK_PATH" custom-build-dir/storybook.apk
+          echo "✅ Copied $APK_PATH → custom-build-dir/storybook.apk"
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-unsigned
+          path: custom-build-dir/storybook.apk
+          retention-days: 1 # Adjust retention to taste
+      - name: Generate manifest
+        run: pnpm run generate-manifest
+      - name: Publish to Chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          storybookBuildDir: custom-build-dir
+          # Optional: do not fail the job when UI changes are detected
+          exitZeroOnChanges: true
+          exitOnceUploaded: true
+          uploadMetadata: true
+          debug: true
