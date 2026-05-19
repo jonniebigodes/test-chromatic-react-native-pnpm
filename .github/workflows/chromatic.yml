@@ -15,7 +15,7 @@ jobs:
   chromatic:
     name: Run Chromatic
     runs-on: ubuntu-latest
-    timeout-minutes: 10 # Set a timeout to prevent hanging builds (might be removed if build times are consistently under 10 minutes)
+    #timeout-minutes: 10 # Set a timeout to prevent hanging builds (might be removed if build times are consistently under 10 minutes, which they should be)
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
