@@ -37,6 +37,25 @@ jobs:
           java-version: "17"
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ hashFiles('package.json', 'app.json') }}
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/caches
+          key: gradle-caches-${{ hashFiles('package.json', 'app.json') }}
+          restore-keys: |
+            gradle-caches-
+      - name: Cache Android directory
+        uses: actions/cache@v5
+        with:
+          path: android/
+          key: android-dir-${{ hashFiles('package.json', 'app.json') }}
+          restore-keys: |
+            android-dir-
       - name: Install dependencies
         run: pnpm install
       - name: Expo prebuild (Android)
@@ -49,7 +68,7 @@ jobs:
         working-directory: android
         env:
           EXPO_PUBLIC_STORYBOOK_ENABLED: "true"
-        run: ./gradlew assembleRelease -x lint --no-daemon
+        run: ./gradlew assembleRelease -x lint --no-daemon --build-cache -PreactNativeArchitectures=x86_64
       - name: Copy APK to custom-build-dir
         run: |
           mkdir -p custom-build-dir
@@ -66,7 +85,7 @@ jobs:
           cp "$APK_PATH" custom-build-dir/storybook.apk
           echo "✅ Copied $APK_PATH → custom-build-dir/storybook.apk"
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-release-unsigned
           path: custom-build-dir/storybook.apk
