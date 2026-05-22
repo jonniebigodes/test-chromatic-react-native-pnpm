@@ -98,7 +98,7 @@ jobs:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: custom-build-dir
           # Optional: do not fail the job when UI changes are detected
-          #exitZeroOnChanges: true
+          exitZeroOnChanges: true
           #exitOnceUploaded: true
           #uploadMetadata: true
           #debug: true
